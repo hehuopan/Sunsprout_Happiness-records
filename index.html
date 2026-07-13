@@ -549,7 +549,9 @@
       var _wCtx = null;
       var _wOX = 0;
       var _wOY = 0;
+      var _wScale = 1;
       var _wDrag = null;
+      var _wPinch = null;
       var _wSmall = 0;
       var _wBig = 0;
       var _wInited = false;
@@ -696,6 +698,7 @@
 
         if (!_wInited) {
           _wInited = true;
+          _wScale = 1;
           var rows = Math.max(3, Math.ceil((_wSmall + _wBig) / ISO_COLS) + 2);
           _wOX = cw / 2 + (ISO_COLS - rows) * (ISO_TW / 4);
           _wOY = ch * 0.12 + ISO_TH;
@@ -716,6 +719,10 @@
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, cw, ch);
 
+        ctx.save();
+        ctx.translate(_wOX, _wOY);
+        ctx.scale(_wScale, _wScale);
+
         var cells = [];
         var i;
         for (i = 0; i < _wBig; i++) cells.push('big');
@@ -732,18 +739,20 @@
 
             var idx = r * ISO_COLS + c;
             var type = cells[idx] || 'empty';
-            var sx = _wOX + (c - r) * (ISO_TW / 2);
-            var sy = _wOY + (c + r) * (ISO_TH / 2);
+            var wx = (c - r) * (ISO_TW / 2);
+            var wy = (c + r) * (ISO_TH / 2);
 
-            _drawBlock(ctx, sx, sy, type);
+            _drawBlock(ctx, wx, wy, type);
 
-            var bx = sx;
-            var by = sy + ISO_TH / 2;
+            var bx = wx;
+            var by = wy + ISO_TH / 2;
 
             if (type === 'small') _drawSmallTree(ctx, bx, by);
             if (type === 'big') _drawBigTree(ctx, bx, by);
           }
         }
+
+        ctx.restore();
       }
 
       function _drawBlock(ctx, sx, sy, type) {
@@ -877,20 +886,61 @@
 
       function _setupDrag(canvas) {
         canvas.addEventListener('touchstart', function(e) {
-          var t = e.touches[0];
-          _wDrag = { sx: t.clientX, sy: t.clientY, ox: _wOX, oy: _wOY };
+          if (e.touches.length === 1) {
+            _wPinch = null;
+            var t = e.touches[0];
+            _wDrag = { sx: t.clientX, sy: t.clientY, ox: _wOX, oy: _wOY };
+          } else if (e.touches.length === 2) {
+            _wDrag = null;
+            var t1 = e.touches[0];
+            var t2 = e.touches[1];
+            var dx = t2.clientX - t1.clientX;
+            var dy = t2.clientY - t1.clientY;
+            _wPinch = {
+              dist: Math.sqrt(dx * dx + dy * dy),
+              scale: _wScale,
+              ox: _wOX,
+              oy: _wOY
+            };
+          }
         }, { passive: true });
 
         canvas.addEventListener('touchmove', function(e) {
-          if (!_wDrag) return;
           e.preventDefault();
-          var t = e.touches[0];
-          _wOX = _wDrag.ox + t.clientX - _wDrag.sx;
-          _wOY = _wDrag.oy + t.clientY - _wDrag.sy;
-          _drawWorld();
+          if (_wDrag && e.touches.length === 1) {
+            var t = e.touches[0];
+            _wOX = _wDrag.ox + t.clientX - _wDrag.sx;
+            _wOY = _wDrag.oy + t.clientY - _wDrag.sy;
+            _drawWorld();
+          } else if (_wPinch && e.touches.length === 2) {
+            var t1 = e.touches[0];
+            var t2 = e.touches[1];
+            var cx = (t1.clientX + t2.clientX) / 2;
+            var cy = (t1.clientY + t2.clientY) / 2;
+            var dx = t2.clientX - t1.clientX;
+            var dy = t2.clientY - t1.clientY;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            var newScale = _wPinch.scale * (dist / _wPinch.dist);
+            newScale = Math.max(0.3, Math.min(3, newScale));
+            var worldX = (cx - _wOX) / _wScale;
+            var worldY = (cy - _wOY) / _wScale;
+            _wScale = newScale;
+            _wOX = cx - worldX * newScale;
+            _wOY = cy - worldY * newScale;
+            _drawWorld();
+          }
         }, { passive: false });
 
-        canvas.addEventListener('touchend', function() { _wDrag = null; }, { passive: true });
+        canvas.addEventListener('touchend', function(e) {
+          if (e.touches.length === 0) {
+            _wDrag = null;
+            _wPinch = null;
+          } else if (e.touches.length === 1) {
+            _wPinch = null;
+            var t = e.touches[0];
+            _wDrag = { sx: t.clientX, sy: t.clientY, ox: _wOX, oy: _wOY };
+          }
+        }, { passive: true });
 
         canvas.addEventListener('mousedown', function(e) {
           _wDrag = { sx: e.clientX, sy: e.clientY, ox: _wOX, oy: _wOY };
@@ -913,6 +963,22 @@
           _wDrag = null;
           canvas.style.cursor = 'grab';
         });
+
+        canvas.addEventListener('wheel', function(e) {
+          e.preventDefault();
+          var rect = canvas.getBoundingClientRect();
+          var mx = e.clientX - rect.left;
+          var my = e.clientY - rect.top;
+          var worldX = (mx - _wOX) / _wScale;
+          var worldY = (my - _wOY) / _wScale;
+          var delta = e.deltaY > 0 ? -0.08 : 0.08;
+          var newScale = _wScale * (1 + delta);
+          newScale = Math.max(0.3, Math.min(3, newScale));
+          _wScale = newScale;
+          _wOX = mx - worldX * newScale;
+          _wOY = my - worldY * newScale;
+          _drawWorld();
+        }, { passive: false });
       }
 
       var voiceRec = null;
