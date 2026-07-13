@@ -78,6 +78,13 @@
       padding: 20px 20px 10px;
       flex-shrink: 0;
       background: transparent;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .header-left {
+      flex: 1;
     }
 
     .header-name {
@@ -91,6 +98,31 @@
       margin-top: 4px;
       font-size: 12px;
       color: var(--muted);
+    }
+
+    .header-help {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--r-card);
+      border: none;
+      color: var(--muted);
+      font-size: 17px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+      box-shadow: 0 2px 8px rgba(120, 85, 30, 0.10);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .header-help:active {
+      transform: scale(0.88);
+      box-shadow: 0 1px 4px rgba(120, 85, 30, 0.08);
     }
 
     .nav {
@@ -470,14 +502,125 @@
     .toast.show {
       transform: translateX(-50%) translateY(0);
     }
+
+    .help-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(60, 40, 20, 0.35);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .help-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .help-card {
+      background: #FDFAF5;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 380px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 24px 22px 22px;
+      box-shadow: 0 8px 40px rgba(80, 40, 15, 0.18);
+      transform: translateY(16px) scale(0.94);
+      transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    .help-overlay.show .help-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .help-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .help-card-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--green-dk);
+      letter-spacing: 2px;
+    }
+
+    .help-card-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--r-inset);
+      border: none;
+      color: var(--muted);
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .help-card-close:active {
+      background: #D8C8A8;
+      transform: scale(0.9);
+    }
+
+    .help-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(180, 150, 90, 0.15);
+    }
+
+    .help-item:last-child {
+      border-bottom: none;
+    }
+
+    .help-item-icon {
+      font-size: 26px;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 1px;
+    }
+
+    .help-item-body {
+      flex: 1;
+    }
+
+    .help-item-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .help-item-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <div class="page active" id="page-record">
       <div class="header">
-        <div class="header-name">光合</div>
-        <div class="header-sub">每一缕阳光，都让土地长出一棵小树</div>
+        <div class="header-left">
+          <div class="header-name">光合</div>
+          <div class="header-sub">每一缕阳光，都让土地长出一棵小树</div>
+        </div>
+        <button class="header-help" onclick="openHelp()" aria-label="使用说明">?</button>
       </div>
       <div class="scroll">
         <div class="input-card">
@@ -522,6 +665,50 @@
 
   <div class="toast" id="toast"></div>
 
+  <div class="help-overlay" id="help-overlay" onclick="closeHelp(event)">
+    <div class="help-card" onclick="event.stopPropagation()">
+      <div class="help-card-header">
+        <div class="help-card-title">使用说明</div>
+        <button class="help-card-close" onclick="closeHelp()">✕</button>
+      </div>
+      <div class="help-item">
+        <div class="help-item-icon">☀️</div>
+        <div class="help-item-body">
+          <div class="help-item-title">记录美好</div>
+          <div class="help-item-desc">写下今天让你开心的一件小事，点击记录按钮保存</div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-item-icon">🎙️</div>
+        <div class="help-item-body">
+          <div class="help-item-title">语音输入</div>
+          <div class="help-item-desc">点击输入框右下角的语音输入按钮，直接说话，识别结果自动填入</div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-item-icon">🌱</div>
+        <div class="help-item-body">
+          <div class="help-item-title">森林生长</div>
+          <div class="help-item-desc">每条记录长出一棵小树，积累 30 棵后可以合并成一棵大树</div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-item-icon">👆</div>
+        <div class="help-item-body">
+          <div class="help-item-title">探索森林</div>
+          <div class="help-item-desc">在森林页单指拖动移动视角，双指捏合可以缩放</div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-item-icon">📄</div>
+        <div class="help-item-body">
+          <div class="help-item-title">导出手帐</div>
+          <div class="help-item-desc">点击记录列表右上角导出按钮，将全部记录保存为 PDF</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function() {
       var KEY_R = 'gh_records';
@@ -540,6 +727,15 @@
         localStorage.setItem(KEY_B, String(n));
       }
 
+      window.openHelp = function() {
+        document.getElementById('help-overlay').classList.add('show');
+      };
+
+      window.closeHelp = function(e) {
+        if (e && e.target !== document.getElementById('help-overlay')) return;
+        document.getElementById('help-overlay').classList.remove('show');
+      };
+
       var ISO_TW = 62;
       var ISO_TH = 31;
       var ISO_BH = 17;
@@ -549,7 +745,9 @@
       var _wCtx = null;
       var _wOX = 0;
       var _wOY = 0;
+      var _wScale = 1;
       var _wDrag = null;
+      var _wPinch = null;
       var _wSmall = 0;
       var _wBig = 0;
       var _wInited = false;
@@ -696,6 +894,7 @@
 
         if (!_wInited) {
           _wInited = true;
+          _wScale = 1;
           var rows = Math.max(3, Math.ceil((_wSmall + _wBig) / ISO_COLS) + 2);
           _wOX = cw / 2 + (ISO_COLS - rows) * (ISO_TW / 4);
           _wOY = ch * 0.12 + ISO_TH;
@@ -716,6 +915,10 @@
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, cw, ch);
 
+        ctx.save();
+        ctx.translate(_wOX, _wOY);
+        ctx.scale(_wScale, _wScale);
+
         var cells = [];
         var i;
         for (i = 0; i < _wBig; i++) cells.push('big');
@@ -732,18 +935,20 @@
 
             var idx = r * ISO_COLS + c;
             var type = cells[idx] || 'empty';
-            var sx = _wOX + (c - r) * (ISO_TW / 2);
-            var sy = _wOY + (c + r) * (ISO_TH / 2);
+            var wx = (c - r) * (ISO_TW / 2);
+            var wy = (c + r) * (ISO_TH / 2);
 
-            _drawBlock(ctx, sx, sy, type);
+            _drawBlock(ctx, wx, wy, type);
 
-            var bx = sx;
-            var by = sy + ISO_TH / 2;
+            var bx = wx;
+            var by = wy + ISO_TH / 2;
 
             if (type === 'small') _drawSmallTree(ctx, bx, by);
             if (type === 'big') _drawBigTree(ctx, bx, by);
           }
         }
+
+        ctx.restore();
       }
 
       function _drawBlock(ctx, sx, sy, type) {
@@ -877,20 +1082,61 @@
 
       function _setupDrag(canvas) {
         canvas.addEventListener('touchstart', function(e) {
-          var t = e.touches[0];
-          _wDrag = { sx: t.clientX, sy: t.clientY, ox: _wOX, oy: _wOY };
+          if (e.touches.length === 1) {
+            _wPinch = null;
+            var t = e.touches[0];
+            _wDrag = { sx: t.clientX, sy: t.clientY, ox: _wOX, oy: _wOY };
+          } else if (e.touches.length === 2) {
+            _wDrag = null;
+            var t1 = e.touches[0];
+            var t2 = e.touches[1];
+            var dx = t2.clientX - t1.clientX;
+            var dy = t2.clientY - t1.clientY;
+            _wPinch = {
+              dist: Math.sqrt(dx * dx + dy * dy),
+              scale: _wScale,
+              ox: _wOX,
+              oy: _wOY
+            };
+          }
         }, { passive: true });
 
         canvas.addEventListener('touchmove', function(e) {
-          if (!_wDrag) return;
           e.preventDefault();
-          var t = e.touches[0];
-          _wOX = _wDrag.ox + t.clientX - _wDrag.sx;
-          _wOY = _wDrag.oy + t.clientY - _wDrag.sy;
-          _drawWorld();
+          if (_wDrag && e.touches.length === 1) {
+            var t = e.touches[0];
+            _wOX = _wDrag.ox + t.clientX - _wDrag.sx;
+            _wOY = _wDrag.oy + t.clientY - _wDrag.sy;
+            _drawWorld();
+          } else if (_wPinch && e.touches.length === 2) {
+            var t1 = e.touches[0];
+            var t2 = e.touches[1];
+            var cx = (t1.clientX + t2.clientX) / 2;
+            var cy = (t1.clientY + t2.clientY) / 2;
+            var dx = t2.clientX - t1.clientX;
+            var dy = t2.clientY - t1.clientY;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            var newScale = _wPinch.scale * (dist / _wPinch.dist);
+            newScale = Math.max(0.3, Math.min(3, newScale));
+            var worldX = (cx - _wOX) / _wScale;
+            var worldY = (cy - _wOY) / _wScale;
+            _wScale = newScale;
+            _wOX = cx - worldX * newScale;
+            _wOY = cy - worldY * newScale;
+            _drawWorld();
+          }
         }, { passive: false });
 
-        canvas.addEventListener('touchend', function() { _wDrag = null; }, { passive: true });
+        canvas.addEventListener('touchend', function(e) {
+          if (e.touches.length === 0) {
+            _wDrag = null;
+            _wPinch = null;
+          } else if (e.touches.length === 1) {
+            _wPinch = null;
+            var t = e.touches[0];
+            _wDrag = { sx: t.clientX, sy: t.clientY, ox: _wOX, oy: _wOY };
+          }
+        }, { passive: true });
 
         canvas.addEventListener('mousedown', function(e) {
           _wDrag = { sx: e.clientX, sy: e.clientY, ox: _wOX, oy: _wOY };
@@ -913,6 +1159,22 @@
           _wDrag = null;
           canvas.style.cursor = 'grab';
         });
+
+        canvas.addEventListener('wheel', function(e) {
+          e.preventDefault();
+          var rect = canvas.getBoundingClientRect();
+          var mx = e.clientX - rect.left;
+          var my = e.clientY - rect.top;
+          var worldX = (mx - _wOX) / _wScale;
+          var worldY = (my - _wOY) / _wScale;
+          var delta = e.deltaY > 0 ? -0.08 : 0.08;
+          var newScale = _wScale * (1 + delta);
+          newScale = Math.max(0.3, Math.min(3, newScale));
+          _wScale = newScale;
+          _wOX = mx - worldX * newScale;
+          _wOY = my - worldY * newScale;
+          _drawWorld();
+        }, { passive: false });
       }
 
       var voiceRec = null;
